@@ -305,6 +305,9 @@
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
     "test": "vscode-test",
+    "web:build": "npm run compile-tests",
+    "web:start": "node standalone/local-web-server.js",
+    "web": "npm run web:build && node standalone/local-web-server.js",
     "publish:patch": "vsce publish patch",
     "publish:minor": "vsce publish minor",
     "publish:major": "vsce publish major"

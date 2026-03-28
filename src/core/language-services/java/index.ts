@@ -16,13 +16,21 @@ export function initJavaLanguageService(wasmPath: string) {
  */
 export async function analyzeJavaCode(
   code: string,
-  position: number
+  position?: number
 ): Promise<FlowchartIR> {
   if (!parserPromise) {
     throw new Error("Java language service not initialized.");
   }
   const parser = await parserPromise;
   return parser.generateFlowchart(code, undefined, position);
+}
+
+export async function listJavaFunctions(code: string): Promise<string[]> {
+  if (!parserPromise) {
+    throw new Error("Java language service not initialized.");
+  }
+  const parser = await parserPromise;
+  return parser.listFunctions(code);
 }
 
 export { JavaAstParser };

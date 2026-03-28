@@ -1,12 +1,23 @@
-import * as vscode from "vscode";
 import { FlowchartIR } from "../ir/ir";
-import { analyzePythonCode } from "./language-services/python";
-import { analyzeTypeScriptCode } from "./language-services/typescript";
-import { analyzeJavaCode } from "./language-services/java";
-import { analyzeCppCode } from "./language-services/cpp";
-import { analyzeCCode } from "./language-services/c";
-import { analyzeRustCode } from "./language-services/rust";
-import { analyzeGoCode } from "./language-services/go";
+import {
+  analyzePythonCode,
+  listPythonFunctions,
+} from "./language-services/python";
+import {
+  analyzeTypeScriptCode,
+  listTypeScriptFunctions,
+} from "./language-services/typescript";
+import { analyzeJavaCode, listJavaFunctions } from "./language-services/java";
+import {
+  analyzeCppCode,
+  listCppFunctions,
+} from "./language-services/cpp";
+import { analyzeCCode, listCFunctions } from "./language-services/c";
+import {
+  analyzeRustCode,
+  listRustFunctions,
+} from "./language-services/rust";
+import { analyzeGoCode, listGoFunctions } from "./language-services/go";
 
 /**
  * Analyzes the given source code and generates a flowchart.
@@ -24,12 +35,12 @@ export async function analyzeCode(
 ): Promise<FlowchartIR> {
   switch (languageId) {
     case "python":
-      return await analyzePythonCode(sourceCode, position || 0);
+      return await analyzePythonCode(sourceCode, position);
     case "typescript":
     case "javascript":
-      return await analyzeTypeScriptCode(sourceCode, position || 0);
+      return await analyzeTypeScriptCode(sourceCode, position);
     case "java":
-      return await analyzeJavaCode(sourceCode, position || 0);
+      return await analyzeJavaCode(sourceCode, position);
     case "cpp":
       return analyzeCppCode(sourceCode, functionName, position);
     case "c":
@@ -38,6 +49,31 @@ export async function analyzeCode(
       return analyzeRustCode(sourceCode, functionName, position);
     case "go":
       return analyzeGoCode(sourceCode, functionName, position);
+    default:
+      throw new Error(`Unsupported language: ${languageId}`);
+  }
+}
+
+export async function listAvailableFunctions(
+  sourceCode: string,
+  languageId: string
+): Promise<string[]> {
+  switch (languageId) {
+    case "python":
+      return await listPythonFunctions(sourceCode);
+    case "typescript":
+    case "javascript":
+      return await listTypeScriptFunctions(sourceCode);
+    case "java":
+      return await listJavaFunctions(sourceCode);
+    case "cpp":
+      return listCppFunctions(sourceCode);
+    case "c":
+      return listCFunctions(sourceCode);
+    case "rust":
+      return listRustFunctions(sourceCode);
+    case "go":
+      return listGoFunctions(sourceCode);
     default:
       throw new Error(`Unsupported language: ${languageId}`);
   }

@@ -16,13 +16,21 @@ export function initTypeScriptLanguageService(wasmPath: string) {
  */
 export async function analyzeTypeScriptCode(
   code: string,
-  position: number
+  position?: number
 ): Promise<FlowchartIR> {
   if (!parserPromise) {
     throw new Error("TypeScript language service not initialized.");
   }
   const parser = await parserPromise;
   return parser.generateFlowchart(code, undefined, position);
+}
+
+export async function listTypeScriptFunctions(code: string): Promise<string[]> {
+  if (!parserPromise) {
+    throw new Error("TypeScript language service not initialized.");
+  }
+  const parser = await parserPromise;
+  return parser.listFunctions(code);
 }
 
 export { TsAstParser };

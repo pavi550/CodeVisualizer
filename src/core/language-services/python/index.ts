@@ -16,11 +16,19 @@ export function initPythonLanguageService(wasmPath: string) {
  */
 export async function analyzePythonCode(
   code: string,
-  position: number
+  position?: number
 ): Promise<FlowchartIR> {
   if (!parserPromise) {
     throw new Error("Python language service not initialized.");
   }
   const parser = await parserPromise;
   return parser.generateFlowchart(code, undefined, position);
+}
+
+export async function listPythonFunctions(code: string): Promise<string[]> {
+  if (!parserPromise) {
+    throw new Error("Python language service not initialized.");
+  }
+  const parser = await parserPromise;
+  return parser.listFunctions(code);
 }
