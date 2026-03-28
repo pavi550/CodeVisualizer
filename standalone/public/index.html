@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CodeVisualizer Local Viewer</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js"></script>
     <style>
       :root {
         --bg: #f4efe7;
@@ -137,6 +138,13 @@
         flex-wrap: wrap;
       }
 
+      .toolbar-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
       .upload-box {
         border: 1px dashed var(--border);
         border-radius: 16px;
@@ -171,6 +179,12 @@
         color: var(--accent);
       }
 
+      button.ghost {
+        background: rgba(255, 252, 247, 0.92);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
       .viewer {
         min-height: 72vh;
         padding: 20px;
@@ -188,6 +202,61 @@
       .viewer-title {
         margin: 0;
         font-size: 24px;
+      }
+
+      .viewer-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+
+      .chip {
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(255, 252, 248, 0.9);
+        border: 1px solid rgba(217, 199, 180, 0.9);
+        color: #5e554c;
+        font-size: 12px;
+      }
+
+      .chip-button {
+        appearance: none;
+        background: rgba(255, 252, 248, 0.9);
+        color: #5e554c;
+        border: 1px solid rgba(217, 199, 180, 0.9);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+      }
+
+      .chip-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(175, 118, 53, 0.55);
+        box-shadow: 0 8px 18px rgba(91, 61, 27, 0.08);
+      }
+
+      .chip-button:focus-visible {
+        outline: 2px solid rgba(175, 118, 53, 0.45);
+        outline-offset: 2px;
+      }
+
+      .viewer-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 252, 248, 0.9);
+        border: 1px solid rgba(217, 199, 180, 0.88);
+      }
+
+      .toolbar-title {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
       }
 
       .status {
@@ -218,8 +287,39 @@
         padding: 20px;
       }
 
+      .diagram-frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(13, 107, 95, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(13, 107, 95, 0.05) 1px, transparent 1px);
+        background-size: 28px 28px;
+        pointer-events: none;
+        opacity: 0.45;
+      }
+
+      .diagram-frame {
+        position: relative;
+      }
+
+      .diagram-stage {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        overflow: auto;
+      }
+
       #diagram {
         min-width: min-content;
+        min-height: 100%;
+        position: relative;
+        z-index: 1;
+      }
+
+      #diagram svg {
+        display: block;
+        margin: 0 auto;
       }
 
       .empty {
@@ -260,6 +360,16 @@
 
         .diagram-frame {
           height: 60vh;
+        }
+
+        .viewer-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .toolbar-row,
+        .viewer-chips {
+          justify-content: flex-start;
         }
       }
     </style>
@@ -379,19 +489,41 @@
               <h2 class="viewer-title" id="title">CodeVisualizer Browser Viewer</h2>
               <p class="status" id="status">Choose a file or folder, then render.</p>
             </div>
-            <div class="meta" id="meta"></div>
+            <div>
+              <div class="meta" id="meta"></div>
+              <div class="viewer-chips">
+                <button class="chip chip-button" id="modeChip" type="button" title="Toggle between flowchart and codebase view">Flowchart</button>
+                <button class="chip chip-button" id="themeChip" type="button" title="Cycle through node themes">Monokai</button>
+                <button class="chip chip-button" id="appearanceChip" type="button" title="Toggle light and dark appearance">Dark</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="viewer-toolbar">
+            <div class="toolbar-title">Visualization Controls</div>
+            <div class="toolbar-row">
+              <button id="fitButton" class="ghost" type="button">Fit</button>
+              <button id="zoomInButton" class="ghost" type="button">Zoom In</button>
+              <button id="zoomOutButton" class="ghost" type="button">Zoom Out</button>
+              <button id="resetButton" class="ghost" type="button">Reset</button>
+              <button id="fullscreenButton" class="ghost" type="button">Fullscreen</button>
+              <button id="downloadSvgButton" class="secondary" type="button">Download SVG</button>
+            </div>
           </div>
 
           <div class="diagram-frame">
-            <div id="diagram" class="empty">
-              <strong>Nothing rendered yet.</strong>
-              <div>Use a repo-relative path like <code>src/extension.ts</code> or <code>src</code>.</div>
+            <div class="diagram-stage" id="diagramStage">
+              <div id="diagram" class="empty">
+                <strong>Nothing rendered yet.</strong>
+                <div>Use a repo-relative path like <code>src/extension.ts</code> or <code>src</code>.</div>
+              </div>
             </div>
           </div>
         </main>
       </div>
     </div>
 
+    <a id="downloadAnchor" style="display: none;"></a>
     <script src="/app.js"></script>
   </body>
   </html>
